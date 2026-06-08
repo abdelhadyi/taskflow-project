@@ -1,0 +1,78 @@
+package main
+
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+
+	"github.com/taskflow/user-service/internal/handler"
+	"github.com/taskflow/user-service/internal/repository"
+	"github.com/taskflow/user-service/internal/service"
+)
+
+func main() {
+	_ = godotenv.Load()
+
+	db, err := openDB(
+		getenv("DB_HOST", "localhost"),
+		getenv("DB_PORT", "5432"),
+		getenv("DB_USER", "postgres"),
+		getenv("DB_PASSWORD", "taskflow"),
+		getenv("DB_NAME", "users_db"),
+	)
+	if err != nil {
+		log.Fatalf("connecting db: %v", err)
+	}
+	defer func() { _ = db.Close() }()
+
+	repo := repository.NewPostgresRepo(db)
+	svc  := service.NewUserService(repo)
+	h    := handler.NewUserHandler(svc)
+
+	r := gin.Default()
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok", "service": "user-service"})
+	})
+	api := r.Group("/api/users")
+	{
+		api.POST("/register", h.Register)
+		api.POST("/login",    h.Login)
+		api.GET("/me",        h.GetProfile)
+		api.PUT("/me",        h.UpdateProfile)
+		api.GET("/",          h.ListUsers)
+		api.GET("/:id",       h.GetUserByID)
+	}
+
+	port := getenv("PORT", "8001")
+	log.Printf("User service running on :%s", port)
+	if err := r.Run(":" + port); err != nil {
+		log.Fatalf("server error: %v", err)
+	}
+}
+
+func openDB(host, port, user, password, dbname string) (*sql.DB, error) {
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname,
+	)
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, err
+	}
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
+func getenv(k, def string) string {
+	if v := os.Getenv(k); v != "" {
+		return v
+	}
+	return def
+}

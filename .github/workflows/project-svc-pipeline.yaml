@@ -1,0 +1,84 @@
+name: project service pipeline
+on:
+  pull_request:
+    branches:
+    - main
+    paths:
+    - 'src/project-service/**'
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v6
+
+    - name: setup-python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+
+    - name: lint 
+      run: |
+        pip install -r requirements.txt 
+        flake8 
+      working-directory: src/project-service/
+
+    - name: test
+      run:
+        python -m pytest
+      working-directory: src/project-service/
+
+  ecr:
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+    - name: checkout
+      uses: actions/checkout@v6
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to Amazon ECR
+      run: |
+        cd src/project-service
+        docker build -t ${{ secrets.ACC_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/taskflow-project:${{ github.run_id }} .
+        docker push ${{ secrets.ACC_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/taskflow-project:${{ github.run_id }}
+
+  update-image:
+    runs-on: ubuntu-latest
+    needs: ecr
+    steps:
+    - name: checkout
+      uses: actions/checkout@v6
+      with:
+        token: ${{ secrets.GH_TOKEN }}
+        ref: ${{ github.head_ref }}
+
+    - name: update-deployment
+      run: |
+        sed -i "s|image: .*|image: ${{ secrets.ACC_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/taskflow-project:${{ github.run_id }}|g" kubernetes/project-svc/deploy.yaml
+
+    - name: git
+      run: |
+        git config --global user.name abdelhadyi
+        git config --global user.email abdelhadyy.elsayed@gmail.com
+        git add kubernetes/project-svc/deploy.yaml
+        git commit -m "update the image version to ${{ github.run_id }} [skip ci] "
+        git push origin ${{ github.head_ref }}
+
+
+
+
+
+

@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskflow-frontend-deployment
+  namespace: taskflow
+  labels:
+    app: taskflow-frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: taskflow-frontend
+  template:
+    metadata:
+      labels:
+        app: taskflow-frontend
+    spec:
+      initContainers:
+      - name: waitforpostgress
+        image: busybox
+        command: ['sh', '-c', 'until nc -z my-postgres-replicas.crunchy-postgres.svc.cluster.local 5432; do echo waiting; sleep 2; done']
+      containers:
+      - name: frontend
+        image: abdelhadii/workflow-app:24808685423
+        ports:
+        - containerPort: 80
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10

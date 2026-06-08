@@ -1,0 +1,39 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+
+metadata:
+  name: my-postgres
+  namespace: crunchy-postgres
+
+spec:
+  postgresVersion: 16
+
+  instances:
+    - name: instance1
+      replicas: 2
+
+      dataVolumeClaimSpec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: ebs
+        resources:
+          requests:
+            storage: 100Mi
+
+  users:
+    - name: appuser
+      databases:
+        - appdb
+
+  backups:
+    pgbackrest:
+      repos:
+        - name: repo1
+          volume:
+            volumeClaimSpec:
+              accessModes:
+                - ReadWriteOnce
+              storageClassName: ebs
+              resources:
+                requests:
+                  storage: 100Mi

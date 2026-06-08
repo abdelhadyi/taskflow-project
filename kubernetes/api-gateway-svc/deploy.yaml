@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskflow-apigateway-deployment
+  namespace: taskflow
+  labels:
+    app: taskflow-apigateway
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: taskflow-apigateway
+  template:
+    metadata:
+      labels:
+        app: taskflow-apigateway
+    spec:
+      initContainers:
+      - name: waitforpostgress
+        image: busybox
+        command: ['sh', '-c', 'until nc -z my-postgres-replicas.crunchy-postgres.svc.cluster.local 5432; do echo waiting; sleep 2; done']
+
+      containers:
+      - name: apigateway
+        image: abdelhadii/taskflow-apigateway:24808901511
+        
+        env:
+        - name: USER_SERVICE_URL
+          value: http://user-service:8001
+        - name: PROJECT_SERVICE_URL
+          value: http://project-service:8002
+        - name: TASK_SERVICE_URL
+          value: http://task-service:8003
+        - name: NOTIFICATION_SERVICE_URL
+          value: http://notification-service:8004
+
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: JWT_SECRET
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        
+        ports:
+        - containerPort: 3000
+

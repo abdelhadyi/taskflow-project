@@ -1,0 +1,140 @@
+version: "3.9"
+
+x-common-env: &common-env
+  JWT_SECRET: ${JWT_SECRET:-taskflow-secret-key-change-in-prod}
+
+x-db-write-env: &db-write-env
+  DB_HOST_WRITE: my-postgres-primary.crunchy-postgres.svc.cluster.local
+  DB_PORT: 5432
+  DB_USER: ${POSTGRES_USER:-taskflow}
+  DB_PASSWORD: ${POSTGRES_PASSWORD:-taskflow}
+
+x-db-read-env: &db-read-env
+  DB_HOST_READ: my-postgres-replicas.crunchy-postgres.svc.cluster.local
+  DB_PORT: 5432
+  DB_USER: ${POSTGRES_USER:-taskflow}
+  DB_PASSWORD: ${POSTGRES_PASSWORD:-taskflow}
+
+x-restart: &restart
+  restart: unless-stopped
+
+networks:
+  taskflow-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    <<: *restart
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-taskflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskflow}
+      POSTGRES_DB: users_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-dbs.sql:/docker-entrypoint-initdb.d/init-dbs.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-taskflow} -d users_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - taskflow-net
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    <<: *restart
+    environment:
+      <<: [*common-env, *db-write-env, *db-read-env]
+      DB_NAME: users_db
+      PORT: 8001
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - taskflow-net
+
+  project-service:
+    build:
+      context: ./project-service
+      dockerfile: Dockerfile
+    <<: *restart
+    environment:
+      <<: [*db-write-env, *db-read-env]
+      DB_NAME: projects_db
+      PORT: 8002
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - taskflow-net
+
+  task-service:
+    build:
+      context: ./task-service
+      dockerfile: Dockerfile
+    <<: *restart
+    environment:
+      <<: [*db-write-env, *db-read-env]
+      DB_NAME: tasks_db
+      PORT: 8003
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - taskflow-net
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    <<: *restart
+    environment:
+      <<: [*db-write-env, *db-read-env]
+      DB_NAME: notifications_db
+      PORT: 8004
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - taskflow-net
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    <<: *restart
+    environment:
+      <<: *common-env
+      PORT: 3000
+      USER_SERVICE_URL:         http://user-service:8001
+      PROJECT_SERVICE_URL:      http://project-service:8002
+      TASK_SERVICE_URL:         http://task-service:8003
+      NOTIFICATION_SERVICE_URL: http://notification-service:8004
+    depends_on:
+      - user-service
+      - project-service
+      - task-service
+      - notification-service
+    networks:
+      - taskflow-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    <<: *restart
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - taskflow-net

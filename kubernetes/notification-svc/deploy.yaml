@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskflow-notification-deployment
+  namespace: taskflow
+  labels:
+    app: taskflow-notification
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: taskflow-notification
+  template:
+    metadata:
+      labels:
+        app: taskflow-notification
+    spec:
+      initContainers:
+      - name: waitforpostgress
+        image: busybox
+        command: ['sh', '-c', 'until nc -z my-postgres-replicas.crunchy-postgres.svc.cluster.local 5432; do echo waiting; sleep 2; done']
+
+      containers:
+      - name: notification-svc
+        image: abdelhadii/taskflow-notfication:25267908156
+  
+        env:
+        - name: DB_NAME
+          value: notifications_db
+
+        envFrom:
+        - configMapRef:
+            name: services-cm
+
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: services-secret
+              key: DB_PASSWORD
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8004
+          initialDelaySeconds: 5
+          periodSeconds: 10
+
+        ports:
+        - containerPort: 8004
+

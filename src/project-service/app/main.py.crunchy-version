@@ -1,0 +1,23 @@
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+from app.api.projects import router as project_router
+from app.db.database import get_pool_write, get_pool_read, close_pools
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await get_pool_write()
+    await get_pool_read()
+    yield
+    await close_pools()
+
+
+app = FastAPI(title="TaskFlow Project Service", version="1.0.0", lifespan=lifespan)
+
+app.include_router(project_router)
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "service": "project-service"}

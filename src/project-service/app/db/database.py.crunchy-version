@@ -1,0 +1,55 @@
+import asyncpg
+from app.config import settings
+
+_pool_write: asyncpg.Pool | None = None
+_pool_read:  asyncpg.Pool | None = None
+
+
+async def get_pool_write() -> asyncpg.Pool:
+    global _pool_write
+    if _pool_write is None:
+        _pool_write = await asyncpg.create_pool(
+            host=settings.db_host_write,
+            port=settings.db_port,
+            user=settings.db_user,
+            password=settings.db_password,
+            database=settings.db_name,
+            min_size=2, max_size=10,
+        )
+    return _pool_write
+
+
+async def get_pool_read() -> asyncpg.Pool:
+    global _pool_read
+    if _pool_read is None:
+        _pool_read = await asyncpg.create_pool(
+            host=settings.db_host_read,
+            port=settings.db_port,
+            user=settings.db_user,
+            password=settings.db_password,
+            database=settings.db_name,
+            min_size=2, max_size=10,
+        )
+    return _pool_read
+
+
+async def close_pools():
+    global _pool_write, _pool_read
+    if _pool_write:
+        await _pool_write.close()
+        _pool_write = None
+    if _pool_read:
+        await _pool_read.close()
+        _pool_read = None
+
+
+async def get_write_db():
+    pool = await get_pool_write()
+    async with pool.acquire() as conn:
+        yield conn
+
+
+async def get_read_db():
+    pool = await get_pool_read()
+    async with pool.acquire() as conn:
+        yield conn

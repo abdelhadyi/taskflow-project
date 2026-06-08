@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: services-cm
+data:
+  DB_HOST_WRITE: my-postgres-primary.crunchy-postgres.svc.cluster.local
+  DB_HOST_READ: my-postgres-replicas.crunchy-postgres.svc.cluster.local
+  DB_PORT: 5432
+  DB_USER: abdelhadi

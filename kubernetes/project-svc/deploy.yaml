@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskflow-project-deployment
+  namespace: taskflow
+  labels:
+    app: taskflow-project
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: taskflow-project
+  template:
+    metadata:
+      labels:
+        app: taskflow-project
+    spec:
+      initContainers:
+      - name: waitforpostgress
+        image: busybox
+        command: ['sh', '-c', 'until nc -z my-postgres-replicas.crunchy-postgres.svc.cluster.local 5432; do echo waiting; sleep 2; done']
+      
+      containers:
+      - name: project-svc
+        image: 
+        
+        env:
+        - name: DB_NAME
+          value: projects_db
+        
+        envFrom:
+        - configMapRef:
+            name: services-cm
+
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: services-secret
+              key: DB_PASSWORD
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        
+        ports:
+        - containerPort: 8002
+

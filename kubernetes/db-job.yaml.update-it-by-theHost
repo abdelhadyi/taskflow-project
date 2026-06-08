@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migration-job
+spec:
+  template:
+    spec:
+      containers:
+      - name: db-migrator
+        image: postgres:15-alpine
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rds-secret
+              key: database-password
+        command:
+        - sh
+        - -c
+        - |
+          set -e 
+          
+          DB_HOST="my-rds-endpoint.xxxx.us-east-1.rds.amazonaws.com"
+          DB_USER="postgres" 
+          
+          echo "1. Creating Databases if not exist..."
+          psql -h $DB_HOST -U $DB_USER -d postgres -f /scripts/00-create-dbs.sql
+          
+          echo "2. Initializing users_db..."
+          psql -h $DB_HOST -U $DB_USER -d users_db -f /scripts/01-users.sql
+          
+          echo "3. Initializing projects_db..."
+          psql -h $DB_HOST -U $DB_USER -d projects_db -f /scripts/02-projects.sql
+          
+          echo "4. Initializing tasks_db..."
+          psql -h $DB_HOST -U $DB_USER -d tasks_db -f /scripts/03-tasks.sql
+          
+          echo "5. Initializing notifications_db..."
+          psql -h $DB_HOST -U $DB_USER -d notifications_db -f /scripts/04-notifications.sql
+          
+          echo "All DBs and Tables initialized successfully"
+        volumeMounts:
+        - name: script-volume
+          mountPath: /scripts
+      restartPolicy: OnFailure
+      volumes:
+      - name: script-volume
+        configMap:
+          name: db-init-script
