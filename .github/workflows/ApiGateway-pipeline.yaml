@@ -51,7 +51,7 @@ jobs:
 
     - name: Build, tag, and push image to Amazon ECR
       run: |
-        cd src/api-gateway-service
+        cd src/api-gateway
         docker build -t ${{ secrets.ACC_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/taskflow-apigateway:${{ github.run_id }} .
         docker push ${{ secrets.ACC_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/taskflow-apigateway:${{ github.run_id }}
 
