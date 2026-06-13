@@ -32,7 +32,7 @@ class Project(ProjectBase):
 
 class MemberBase(BaseModel):
     user_id: int
-    role: str = "member"   # owner | admin | member | viewer
+    role: str = "member"   # owner | admin | member |  viewer
 
 
 class MemberCreate(MemberBase):
