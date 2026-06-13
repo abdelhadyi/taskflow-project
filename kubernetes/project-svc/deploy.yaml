@@ -6,7 +6,7 @@ metadata:
   labels:
     app: taskflow-project
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: taskflow-project
@@ -16,18 +16,14 @@ spec:
         app: taskflow-project
     
     spec:
-      initContainers:
-      - name: waitforpostgress
-        image: 383189130746.dkr.ecr.us-east-1.amazonaws.com/taskflow-project:27474256172
-        envFrom:
-        - configMapRef:
-            name: services-cm
-        command: ['sh', '-c', 'until nc -z $DB_HOST 5432; do echo waiting; sleep 2; done']
       
       containers:
       - name: project-svc
         image: 383189130746.dkr.ecr.us-east-1.amazonaws.com/taskflow-project:27474256172
         
+        envFrom:
+        - configMapRef:
+            name: services-cm   
         env:
         - name: DB_NAME
           value: projects_db

@@ -4,5 +4,5 @@ metadata:
   name: services-cm
 data:
   DB_HOST: taskflow-database.cw9cgww6gone.us-east-1.rds.amazonaws.com
-  DB_PORT: 5432
+  DB_PORT: "5432"
   DB_USER: postgres

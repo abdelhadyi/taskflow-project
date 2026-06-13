@@ -6,7 +6,7 @@ metadata:
   labels:
     app: taskflow-user
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: taskflow-user
@@ -15,37 +15,26 @@ spec:
       labels:
         app: taskflow-user
     spec:
-      initContainers:
-      - name: waitforpostgress
-        image: 383189130746.dkr.ecr.us-east-1.amazonaws.com/taskflow-user:1
-        envFrom:
-        - configMapRef:
-            name: services-cm
-        command: ['sh', '-c', 'until nc -z $DB_HOST 5432; do echo waiting; sleep 2; done']
-      
       containers:
       - name: user-svc
         image: 383189130746.dkr.ecr.us-east-1.amazonaws.com/taskflow-user:1
         
         env:
         - name: DB_NAME
-          value: users_db
-        
+          value: "users_db"
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: services-secret
               key: DB_PASSWORD
-
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
               name: jwt-secret
               key: JWT_SECRET
-
         envFrom:
         - configMapRef:
-            name: services-cm
+            name: services-cm        
         
         livenessProbe:
           httpGet:
