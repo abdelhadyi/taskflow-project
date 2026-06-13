@@ -9,14 +9,13 @@ def make_conn():
     conn = AsyncMock()
     return conn
 
-
 def fake_row(data: dict):
-    """Return a dict-like object that mimics asyncpg Record."""
     rec = MagicMock()
-    rec.__iter__ = MagicMock(return_value=iter(data.items()))
+    rec.__class__ = dict
+    type(rec).__iter__ = lambda self: iter(data.items())
+    rec.items = MagicMock(return_value=data.items())
     rec.__getitem__ = MagicMock(side_effect=data.__getitem__)
     return rec
-
 
 PROJECT_ROW = {
     "id": 1, "name": "Alpha", "description": "desc", "color": "#fff",
