@@ -15,16 +15,19 @@ spec:
       labels:
         app: taskflow-frontend
     spec:
-      initContainers:
-      - name: waitforpostgress
-        image: busybox
-        command: ['sh', '-c', 'until nc -z my-postgres-replicas.crunchy-postgres.svc.cluster.local 5432; do echo waiting; sleep 2; done']
       containers:
       - name: frontend
         image: abdelhadii/workflow-app:24808685423
         ports:
         - containerPort: 80
 
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          
         readinessProbe:
           httpGet:
             path: /health
