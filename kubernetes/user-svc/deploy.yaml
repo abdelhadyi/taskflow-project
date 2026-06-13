@@ -18,7 +18,10 @@ spec:
       initContainers:
       - name: waitforpostgress
         image: busybox
-        command: ['sh', '-c', 'until nc -z my-postgres-replicas.crunchy-postgres.svc.cluster.local 5432; do echo waiting; sleep 2; done']
+        envFrom:
+        - configMapRef:
+            name: services-cm
+        command: ['sh', '-c', 'until nc -z $DB_HOST 5432; do echo waiting; sleep 2; done']
       
       containers:
       - name: user-svc
@@ -27,12 +30,7 @@ spec:
         env:
         - name: DB_NAME
           value: users_db
-
-        envFrom:
-        - configMapRef:
-            name: services-cm
         
-        env:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
@@ -44,7 +42,18 @@ spec:
             secretKeyRef:
               name: jwt-secret
               key: JWT_SECRET
+
+        envFrom:
+        - configMapRef:
+            name: services-cm
         
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 15
+          periodSeconds: 20  
+          
         readinessProbe:
           httpGet:
             path: /health
