@@ -50,7 +50,7 @@ jobs:
 
     - name: Build, tag, and push image to Amazon ECR
       run: |
-        cd src/frontend-service
+        cd src/frontend
         docker build -t ${{ secrets.ACC_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/taskflow-frontend:${{ github.run_id }} .
         docker push ${{ secrets.ACC_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/taskflow-frontend:${{ github.run_id }}
 
