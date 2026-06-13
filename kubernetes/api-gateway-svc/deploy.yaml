@@ -15,11 +15,6 @@ spec:
       labels:
         app: taskflow-apigateway
     spec:
-      initContainers:
-      - name: waitforpostgress
-        image: busybox
-        command: ['sh', '-c', 'until nc -z my-postgres-replicas.crunchy-postgres.svc.cluster.local 5432; do echo waiting; sleep 2; done']
-
       containers:
       - name: apigateway
         image: abdelhadii/taskflow-apigateway:24808901511
