@@ -18,7 +18,7 @@ spec:
     spec:
       initContainers:
       - name: waitforpostgress
-        image: busybox
+        image: 383189130746.dkr.ecr.us-east-1.amazonaws.com/taskflow-project:27474256172
         envFrom:
         - configMapRef:
             name: services-cm
@@ -26,7 +26,7 @@ spec:
       
       containers:
       - name: project-svc
-        image: 
+        image: 383189130746.dkr.ecr.us-east-1.amazonaws.com/taskflow-project:27474256172
         
         env:
         - name: DB_NAME
