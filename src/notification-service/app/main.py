@@ -20,3 +20,4 @@ app.include_router(notif_router)
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "notification-service"}
+
