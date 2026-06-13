@@ -50,7 +50,7 @@ jobs:
 
     - name: Build, tag, and push image to Amazon ECR
       run: |
-        cd src/notification
+        cd src/notification-service
         docker build -t ${{ secrets.ACC_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/taskflow-notification:${{ github.run_id }} .
         docker push ${{ secrets.ACC_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/taskflow-notification:${{ github.run_id }}
 
