@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: apigateway
-        image: abdelhadii/taskflow-apigateway:24808901511
+        image: 383189130746.dkr.ecr.us-east-1.amazonaws.com/taskflow-apigateway:27473159288
         
         env:
         - name: USER_SERVICE_URL
