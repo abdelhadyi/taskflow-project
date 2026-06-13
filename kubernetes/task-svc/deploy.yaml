@@ -30,7 +30,7 @@ spec:
         
         env:
         - name: DB_NAME
-          value: users_db
+          value: tasks_db
         
         - name: DB_PASSWORD
           valueFrom:
