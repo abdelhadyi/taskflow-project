@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: abdelhadii/workflow-app:24808685423
+        image: 383189130746.dkr.ecr.us-east-1.amazonaws.com/taskflow-frontend:27473374095
         ports:
         - containerPort: 80
 
