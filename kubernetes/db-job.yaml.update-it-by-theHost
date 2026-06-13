@@ -8,21 +8,23 @@ spec:
       containers:
       - name: db-migrator
         image: postgres:15-alpine
+        
+        envFrom:
+        - configMapRef:
+            name: services-cm
         env:
         - name: PGPASSWORD
           valueFrom:
             secretKeyRef:
               name: rds-secret
               key: database-password
+        
         command:
         - sh
         - -c
         - |
           set -e 
-          
-          DB_HOST="my-rds-endpoint.xxxx.us-east-1.rds.amazonaws.com"
-          DB_USER="postgres" 
-          
+        
           echo "1. Creating Databases if not exist..."
           psql -h $DB_HOST -U $DB_USER -d postgres -f /scripts/00-create-dbs.sql
           
