@@ -66,7 +66,7 @@ jobs:
 
     - name: update-deployment
       run: |
-        sed -i "s|image: .*|image: ${{ secrets.ACC_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/taskflow-frontend:${{ github.run_id }}|g" kubernetes/frontend-svc/deploy.yaml
+        sed -i "s|image: .*|image: ${{ secrets.ACC_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/taskflow-frontend:${{ github.run_id }}|g" kubernetes/frontend/deploy.yaml
 
     - name: git
       run: |
