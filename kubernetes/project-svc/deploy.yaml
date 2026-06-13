@@ -14,11 +14,15 @@ spec:
     metadata:
       labels:
         app: taskflow-project
+    
     spec:
       initContainers:
       - name: waitforpostgress
         image: busybox
-        command: ['sh', '-c', 'until nc -z my-postgres-replicas.crunchy-postgres.svc.cluster.local 5432; do echo waiting; sleep 2; done']
+        envFrom:
+        - configMapRef:
+            name: services-cm
+        command: ['sh', '-c', 'until nc -z $DB_HOST 5432; do echo waiting; sleep 2; done']
       
       containers:
       - name: project-svc
@@ -28,16 +32,11 @@ spec:
         - name: DB_NAME
           value: projects_db
         
-        envFrom:
-        - configMapRef:
-            name: services-cm
-
-        env:
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
               name: services-secret
-              key: DB_PASSWORD
+              key: DB_PASSWORD        
         
         readinessProbe:
           httpGet:
@@ -46,6 +45,13 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
         
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          
         ports:
         - containerPort: 8002
 
