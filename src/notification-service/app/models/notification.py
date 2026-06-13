@@ -8,7 +8,7 @@ class NotificationCreate(BaseModel):
     type: str          # task_assigned | task_updated | comment_added | project_invite
     title: str
     body: str
-    reference_id: Optional[int] = None    # task_id or project_id
+    reference_id: Optional[int] = None    # task_id or  project_id
     reference_type: Optional[str] = None  # task | project
 
 
