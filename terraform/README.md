@@ -7,3 +7,9 @@ Provision Infrastructure
     #terraform plan 
     
     #terraform apply
+
+### Infrastructure
+  * Terraform
+  * AWS VPC
+  * AWS EKS
+  * IAM Roles
