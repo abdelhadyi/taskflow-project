@@ -1,9 +1,9 @@
 Provision Infrastructure
 
-  cd terraform 
-  
-  terraform init  
-  
-  terraform plan 
-  
-  terraform apply
+    #cd terraform 
+    
+    #terraform init  
+    
+    #terraform plan 
+    
+    #terraform apply
