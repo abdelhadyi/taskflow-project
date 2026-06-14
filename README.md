@@ -1,183 +1,265 @@
-# TaskFlow — Microservices Project Management System
+# TaskFlow: Production-Ready Microservices Application on AWS EKS
 
-A full-stack, 3-tier microservices application for team project and task management.
+TaskFlow is a highly scalable, fault-tolerant, 3-Tier microservices application designed for task and project management.
 
-## Architecture
+The entire infrastructure is provisioned using Infrastructure as Code (IaC) via Terraform, deployed onto AWS EKS (Elastic Kubernetes Service), and managed using GitOps best practices with ArgoCD.
 
-```
+---
+
+## 🏗️ System Architecture
+
+The application is split into three decoupled tiers to ensure high availability, independent scaling, and security isolation.
+
+```text
 ┌─────────────────────────────────────────────────────────┐
-│  Tier 1 – Presentation                                   │
-│  React + TypeScript (nginx :80)                          │
-└────────────────────┬────────────────────────────────────┘
-                     │ /api/*
-┌────────────────────▼────────────────────────────────────┐
-│  Tier 2 – Application                                    │
-│                                                          │
-│  API Gateway (Node.js :3000)                             │
-│    │          │           │              │               │
-│  User      Project      Task       Notification          │
-│  Service   Service     Service      Service              │
-│  (Go:8001) (Py:8002)  (Go:8003)   (Py:8004)            │
-└────────────────────┬────────────────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────────────────┐
-│  Tier 3 – Data                                           │
-│  PostgreSQL (4 logical databases)                        │
-│  users_db · projects_db · tasks_db · notifications_db   │
+│                 Tier 1 – Presentation                  │
+│              React + TypeScript (Nginx :80)            │
+└────────────────────────────┬────────────────────────────┘
+                             │
+                          /api/*
+                             │
+                             ▼
+                    AWS ALB via Ingress
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────┐
+│                 Tier 2 – Application                   │
+│                                                        │
+│              API Gateway (Node.js :3000)              │
+│                                                        │
+│   ┌─────────────┬─────────────┬─────────────┬────────┐ │
+│   ▼             ▼             ▼             ▼        │ │
+│ User        Project        Task      Notification    │ │
+│ Service     Service       Service      Service       │ │
+│ Go:8001   Python:8002    Go:8003    Python:8004      │ │
+└────┬──────────┬───────────┬───────────┬──────────────┘
+     │          │           │           │
+     ▼          ▼           ▼           ▼
+
+┌─────────────────────────────────────────────────────────┐
+│                    Tier 3 – Data                       │
+│             AWS RDS PostgreSQL Instance                │
+│                                                        │
+│  users_db | projects_db | tasks_db | notifications_db │
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Services
+### Component Breakdown
 
-| Service | Language | Port | Responsibility |
-|---|---|---|---|
-| **Frontend** | React + TypeScript | 80 | UI – Dashboard, Kanban board, Notifications |
-| **API Gateway** | Node.js (Express) | 3000 | Auth middleware, JWT validation, reverse proxy |
-| **User Service** | Go (Gin) | 8001 | Registration, login, JWT issuance, profiles |
-| **Project Service** | Python (FastAPI) | 8002 | Projects CRUD, membership management |
-| **Task Service** | Go (Gin) | 8003 | Tasks CRUD, comments, status workflow |
-| **Notification Service** | Python (FastAPI) | 8004 | Notifications, read/unread tracking |
+#### Frontend Tier
 
-## Quick Start
+* React
+* TypeScript
+* Nginx
+* Port 80
+
+#### API Gateway
+
+* Node.js
+* Reverse Proxy
+* Port 3000
+
+#### Microservices
+
+##### User Service
+
+* Language: Go
+* Port: 8001
+* Responsibility: Authentication & User Management
+
+##### Project Service
+
+* Language: Python
+* Port: 8002
+* Responsibility: Project Management
+
+##### Task Service
+
+* Language: Go
+* Port: 8003
+* Responsibility: Task Lifecycle Management
+
+##### Notification Service
+
+* Language: Python
+* Port: 8004
+* Responsibility: Notifications & Alerts
+
+#### Database Tier
+
+AWS RDS PostgreSQL hosting isolated databases:
+
+* users_db
+* projects_db
+* tasks_db
+* notifications_db
+
+---
+
+## 🛠️ Tech Stack & Infrastructure
+
+### Infrastructure
+
+* Terraform
+* AWS VPC
+* AWS EKS
+* IAM Roles
+
+### Container Registry
+
+* Amazon ECR
+
+### Kubernetes
+
+* EKS
+* AWS Load Balancer Controller
+* ALB Ingress
+
+### CI/CD
+
+* GitHub Actions
+* ArgoCD
+
+---
+
+## 🚀 CI/CD Pipeline & GitOps Workflow
+
+### Continuous Integration (GitHub Actions)
+
+On every push to the `main` branch:
+
+1. Linting & Code Quality Checks
+2. Unit Testing
+3. Docker Image Build
+4. AWS Authentication
+5. Push Images to Amazon ECR
+
+### Continuous Delivery (ArgoCD)
+
+ArgoCD continuously monitors the desired state stored in Git and synchronizes the cluster automatically.
+
+---
+
+## 📦 Repository Structure
+
+```text
+.
+├── .github/
+│   └── workflows/
+│
+├── terraform/
+│   ├── modules/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+│
+├── kubernetes/
+│   ├── frontend/
+│   ├── api-gateway-svc/
+│   ├── user-svc/
+│   ├── project-svc/
+│   ├── task-svc/
+│   ├── notification-svc/
+│   ├── configmap.yaml
+│   ├── secret.yaml
+│   ├── jwt-secret.yaml
+│   ├── ingress.yaml
+│   └── db-job.yaml
+│
+├── frontend/
+├── api-gateway/
+├── user-service/
+├── project-service/
+├── task-service/
+└── notification-service/
+```
+
+---
+
+## 🔧 Production Notes
+
+### Database Connectivity
+
+AWS RDS PostgreSQL is used as the primary database layer.
+
+Each microservice owns its dedicated database schema to maintain loose coupling and service independence.
+
+### Networking
+
+The AWS Load Balancer Controller provisions an Application Load Balancer (ALB) automatically.
+
+Traffic flow:
+
+```text
+Internet --->  AWS ALB ---> Ingress ---> Frontend / API Gateway ---> Microservices ---> RDS PostgreSQL
+```
+
+---
+
+## 🛠️ Deployment Guide
+
+### Prerequisites
+
+* AWS CLI
+* Terraform >= 1.5
+* kubectl
+* Helm
+* Docker
+
+---
+
+### 1. Provision Infrastructure
 
 ```bash
-# 1. Clone & enter
-git clone <repo> && cd taskflow
+cd terraform
 
-# 2. Configure environment
-cp .env.example .env
-# Edit .env if needed
+terraform init
 
-# 3. Build and run all services
-docker-compose up --build
+terraform plan
 
-# 4. Open in browser
-open http://localhost
+terraform apply
 ```
 
-> First boot: PostgreSQL will run `scripts/init-dbs.sql` automatically to create
-> all 4 databases and their schemas.
+---
 
-## Running Tests
-
-Each service has its own test command:
+### 2. Configure kubectl
 
 ```bash
-# API Gateway (Node.js / Jest)
-cd api-gateway && npm install && npm test
-
-# User Service (Go)
-cd user-service && go test ./tests/... -v
-
-# Task Service (Go)
-cd task-service && go test ./tests/... -v
-
-# Project Service (Python / pytest)
-cd project-service && pip install -r requirements.txt && pytest
-
-# Notification Service (Python / pytest)
-cd notification-service && pip install -r requirements.txt && pytest
-
-# Frontend (Vitest)
-cd frontend && npm install && npm test
+aws eks update-kubeconfig \
+  --region us-east-1 \
+  --name TaskFlow-App-Cluster
 ```
 
-## API Reference
+---
 
-All requests go through the gateway at `http://localhost:3000`.
-Protected routes require: `Authorization: Bearer <token>`
+### 3. Deploy Kubernetes Resources
 
-### Auth
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| POST | `/api/users/register` | ❌ | Register new user |
-| POST | `/api/users/login` | ❌ | Login, returns JWT |
-| GET | `/api/users/me` | ✅ | Get own profile |
-| PUT | `/api/users/me` | ✅ | Update profile |
-| GET | `/api/users/` | ✅ | List all users |
-
-### Projects
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/projects/` | List my projects |
-| POST | `/api/projects/` | Create project |
-| GET | `/api/projects/:id` | Get project |
-| PUT | `/api/projects/:id` | Update project |
-| DELETE | `/api/projects/:id` | Delete project |
-| GET | `/api/projects/:id/members` | List members |
-| POST | `/api/projects/:id/members` | Add member |
-| DELETE | `/api/projects/:id/members/:userId` | Remove member |
-
-### Tasks
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/tasks/?project_id=X` | List tasks (filter by project) |
-| POST | `/api/tasks/` | Create task |
-| GET | `/api/tasks/:id` | Get task |
-| PUT | `/api/tasks/:id` | Update task |
-| DELETE | `/api/tasks/:id` | Delete task |
-| GET | `/api/tasks/:id/comments` | List comments |
-| POST | `/api/tasks/:id/comments` | Add comment |
-
-### Notifications
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/notifications/` | List notifications |
-| GET | `/api/notifications/unread-count` | Get unread count |
-| PUT | `/api/notifications/:id/read` | Mark as read |
-| PUT | `/api/notifications/read-all` | Mark all as read |
-| DELETE | `/api/notifications/:id` | Delete notification |
-
-## Project Structure
-
+```bash
+kubectl apply -f kubernetes/
 ```
-taskflow/
-├── api-gateway/          # Node.js reverse proxy + JWT auth
-│   ├── src/index.js
-│   ├── tests/
-│   ├── package.json
-│   └── Dockerfile
-├── user-service/         # Go – users & auth
-│   ├── cmd/main.go
-│   ├── internal/
-│   │   ├── model/
-│   │   ├── repository/
-│   │   ├── service/
-│   │   └── handler/
-│   ├── migrations/
-│   ├── tests/
-│   └── Dockerfile
-├── project-service/      # Python/FastAPI – projects
-│   ├── app/
-│   │   ├── api/
-│   │   ├── models/
-│   │   ├── services/
-│   │   └── db/
-│   ├── migrations/
-│   ├── tests/
-│   └── Dockerfile
-├── task-service/         # Go – tasks & comments
-│   ├── cmd/main.go
-│   ├── internal/
-│   ├── migrations/
-│   ├── tests/
-│   └── Dockerfile
-├── notification-service/ # Python/FastAPI – notifications
-│   ├── app/
-│   ├── migrations/
-│   ├── tests/
-│   └── Dockerfile
-├── frontend/             # React + TypeScript
-│   ├── src/
-│   │   ├── pages/
-│   │   ├── components/
-│   │   ├── api/
-│   │   ├── store/
-│   │   └── types/
-│   ├── nginx.conf
-│   └── Dockerfile
-├── scripts/
-│   └── init-dbs.sql      # Creates all 4 DBs on first boot
-├── docker-compose.yml
-└── .env.example
+
+---
+
+### 4. Install AWS Load Balancer Controller
+
+```bash
+helm repo add eks https://aws.github.io/eks-charts
+
+helm repo update
+
+helm install aws-load-balancer-controller \
+  eks/aws-load-balancer-controller \
+  -n kube-system
 ```
+
+---
+
+### 5. Install ArgoCD
+
+```bash
+kubectl create namespace argocd
+
+kubectl apply -n argocd \
+-f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
