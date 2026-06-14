@@ -48,9 +48,8 @@ jobs:
           -Dsonar.organization=taskflow-project
           -Dsonar.projectKey=abdelhadyi_taskflow-project
           -Dsonar.projectBaseDir=src/api-gateway
-          -Dsonar.qualitygate.wait=true
   
-  Build-scan-push:
+  Build-Scan-PushToECR:
     runs-on: ubuntu-latest
     needs: tests
     steps:
@@ -87,7 +86,7 @@ jobs:
   
   update-image:
     runs-on: ubuntu-latest
-    needs: Build-scan-push
+    needs: Build-Scan-PushToECR
     steps:
     - name: checkout
       uses: actions/checkout@v6
