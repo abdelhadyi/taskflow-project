@@ -37,9 +37,9 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         args: >
-          -Dsonar.organization= taskflow-project
-          -Dsonar.projectKey= abdelhadyi_taskflow-project
-          -Dsonar.projectBaseDir= src/frontend
+          -Dsonar.organization=taskflow-project
+          -Dsonar.projectKey=abdelhadyi_taskflow-project
+          -Dsonar.projectBaseDir=src/frontend
 
   
   ecr:
