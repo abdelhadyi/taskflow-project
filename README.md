@@ -11,137 +11,104 @@ The entire infrastructure is provisioned using Infrastructure as Code (IaC) via 
 The application is split into three decoupled tiers to ensure high availability, independent scaling, and security isolation.
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│                 Tier 1 – Presentation                  │
-│              React + TypeScript (Nginx :80)            │
-└────────────────────────────┬────────────────────────────┘
-                             │
-                          /api/*
-                             │
+┌──────────────────────────────────────────────────────┐
+│                 Tier 1 – Presentation                │
+│              React + TypeScript (Nginx :80)          │
+└────────────────────────────┬─────────────────────────┘
                              ▼
-                    AWS ALB via Ingress
-                             │
-                             ▼
-┌─────────────────────────────────────────────────────────┐
-│                 Tier 2 – Application                   │
-│                                                        │
-│              API Gateway (Node.js :3000)              │
-│                                                        │
-│   ┌─────────────┬─────────────┬─────────────┬────────┐ │
-│   ▼             ▼             ▼             ▼        │ │
-│ User        Project        Task      Notification    │ │
-│ Service     Service       Service      Service       │ │
-│ Go:8001   Python:8002    Go:8003    Python:8004      │ │
+┌──────────────────────────────────────────────────────┐
+│                 Tier 2 – Application                 │
+│              API Gateway (Node.js :3000)             │
+│   ┌─────────────┬─────────────┬─────────────┬        |
+│   ▼             ▼             ▼             ▼        │
+│ User        Project        Task      Notification    │
+│ Service     Service       Service      Service       │
+│ Go:8001   Python:8002    Go:8003    Python:8004      │
 └────┬──────────┬───────────┬───────────┬──────────────┘
-     │          │           │           │
      ▼          ▼           ▼           ▼
-
-┌─────────────────────────────────────────────────────────┐
+┌────────────────────────────────────────────────────────┐
 │                    Tier 3 – Data                       │
 │             AWS RDS PostgreSQL Instance                │
-│                                                        │
-│  users_db | projects_db | tasks_db | notifications_db │
-└─────────────────────────────────────────────────────────┘
+│  users_db | projects_db | tasks_db | notifications_db  │
+└────────────────────────────────────────────────────────┘
 ```
-
 ### Component Breakdown
-
 #### Frontend Tier
-
-* React
-* TypeScript
-* Nginx
-* Port 80
+  * React
+  * TypeScript
+  * Nginx
+  * Port 80
 
 #### API Gateway
-
-* Node.js
-* Reverse Proxy
-* Port 3000
+  * Node.js
+  * Reverse Proxy
+  * Port 3000
 
 #### Microservices
-
 ##### User Service
-
-* Language: Go
-* Port: 8001
-* Responsibility: Authentication & User Management
+  * Language: Go
+  * Port: 8001
+  * Responsibility: Authentication & User Management
 
 ##### Project Service
-
-* Language: Python
-* Port: 8002
-* Responsibility: Project Management
+  * Language: Python
+  * Port: 8002
+  * Responsibility: Project Management
 
 ##### Task Service
-
-* Language: Go
-* Port: 8003
-* Responsibility: Task Lifecycle Management
+  * Language: Go
+  * Port: 8003
+  * Responsibility: Task Lifecycle Management
 
 ##### Notification Service
-
-* Language: Python
-* Port: 8004
-* Responsibility: Notifications & Alerts
+  * Language: Python
+  * Port: 8004
+  * Responsibility: Notifications & Alerts
 
 #### Database Tier
-
 AWS RDS PostgreSQL hosting isolated databases:
-
-* users_db
-* projects_db
-* tasks_db
-* notifications_db
+  * users_db
+  * projects_db
+  * tasks_db
+  * notifications_db
 
 ---
 
 ## Tech Stack & Infrastructure
-
 ### Infrastructure
-
-* Terraform
-* AWS VPC
-* AWS EKS
-* IAM Roles
+  * Terraform
+  * AWS VPC
+  * AWS EKS
+  * IAM Roles
 
 ### Container Registry
-
-* Amazon ECR
+  * Amazon ECR
 
 ### Kubernetes
+  * EKS
+  * AWS Load Balancer Controller
+  * ALB Ingress
 
-* EKS
-* AWS Load Balancer Controller
-* ALB Ingress
-
-### CI/CD
-
-* GitHub Actions
-* ArgoCD
+### CI/CD  
+  * GitHub Actions
+  * ArgoCD
 
 ---
-
 ## CI/CD Pipeline & GitOps Workflow
-
 ### Continuous Integration (GitHub Actions)
-
 On every push to the `main` branch:
-
-1. Linting & Code Quality Checks
-2. Unit Testing
-3. Docker Image Build
-4. AWS Authentication
-5. Push Images to Amazon ECR
+  1. Linting & Code Quality Checks
+  2. Unit Testing
+  3. Docker Image Build
+  4. AWS Authentication
+  5. Push Images to Amazon ECR
 
 ### Continuous Delivery (ArgoCD)
-
 ArgoCD continuously monitors the desired state stored in Git and synchronizes the cluster automatically.
 
 ---
 
 ## Repository Structure
-
 ```text
 .
 ├── .github/
@@ -177,19 +144,15 @@ ArgoCD continuously monitors the desired state stored in Git and synchronizes th
 ---
 
 ## Production Notes
-
 ### Database Connectivity
 
 AWS RDS PostgreSQL is used as the primary database layer.
-
 Each microservice owns its dedicated database schema to maintain loose coupling and service independence.
 
 ### Networking
-
 The AWS Load Balancer Controller provisions an Application Load Balancer (ALB) automatically.
 
 Traffic flow:
-
 ```text
 Internet --->  AWS ALB ---> Ingress ---> Frontend / API Gateway ---> Microservices ---> RDS PostgreSQL
 ```
@@ -197,14 +160,12 @@ Internet --->  AWS ALB ---> Ingress ---> Frontend / API Gateway ---> Microservic
 ---
 
 ## Deployment Guide
-
 ### Prerequisites
-
-* AWS CLI
-* Terraform >= 1.5
-* kubectl
-* Helm
-* Docker
+  * AWS CLI
+  * Terraform >= 1.5
+  * kubectl
+  * Helm
+  * Docker
 
 ---
 
