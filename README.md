@@ -6,7 +6,7 @@ The entire infrastructure is provisioned using Infrastructure as Code (IaC) via 
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
 The application is split into three decoupled tiers to ensure high availability, independent scaling, and security isolation.
 
@@ -96,7 +96,7 @@ AWS RDS PostgreSQL hosting isolated databases:
 
 ---
 
-## 🛠️ Tech Stack & Infrastructure
+## Tech Stack & Infrastructure
 
 ### Infrastructure
 
@@ -122,7 +122,7 @@ AWS RDS PostgreSQL hosting isolated databases:
 
 ---
 
-## 🚀 CI/CD Pipeline & GitOps Workflow
+## CI/CD Pipeline & GitOps Workflow
 
 ### Continuous Integration (GitHub Actions)
 
@@ -140,7 +140,7 @@ ArgoCD continuously monitors the desired state stored in Git and synchronizes th
 
 ---
 
-## 📦 Repository Structure
+## Repository Structure
 
 ```text
 .
@@ -176,7 +176,7 @@ ArgoCD continuously monitors the desired state stored in Git and synchronizes th
 
 ---
 
-## 🔧 Production Notes
+## Production Notes
 
 ### Database Connectivity
 
@@ -196,7 +196,7 @@ Internet --->  AWS ALB ---> Ingress ---> Frontend / API Gateway ---> Microservic
 
 ---
 
-## 🛠️ Deployment Guide
+## Deployment Guide
 
 ### Prerequisites
 
